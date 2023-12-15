@@ -1,5 +1,10 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -11,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     p.setColor(QPalette::Base, Qt::black);
     p.setColor(QPalette::Text, Qt::gray);
     ui->plainTextEdit->setPalette(p);
+
 }
 
 MainWindow::~MainWindow()
@@ -28,7 +34,17 @@ void MainWindow::on_lineEdit_returnPressed()
     ui->plainTextEdit->mergeCurrentCharFormat(fmt);
     ui->plainTextEdit->appendPlainText(line);
     ui->plainTextEdit->setCurrentCharFormat(fmt0);
-    ui->plainTextEdit->appendPlainText("什么\n");
+
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    connect(manager, &QNetworkAccessManager::finished,
+                     this, [manager, this, fmt0](QNetworkReply *reply){
+        qDebug() << reply->error();
+        ui->plainTextEdit->appendPlainText(reply->readAll());
+    });
+    QNetworkRequest request;
+    request.setUrl(QUrl("http://127.0.0.1:7013/" + line));
+    manager->get(request);
+
     ui->lineEdit->selectAll();
 }
-
